@@ -66,15 +66,19 @@ api.interceptors.request.use(
      * Vendor API & Portal Requests
      * ================================================
      */
+    const vendorToken =
+      sessionStorage.getItem("vendorToken") ||
+      localStorage.getItem("vendorToken");
+
     if (isVendorEndpoint) {
       // Pure vendor routes always use vendorToken
-      token = localStorage.getItem("vendorToken");
+      token = vendorToken;
     } else if (
       (isVendorPortalContext || isVendorRatingRoute) &&
-      localStorage.getItem("vendorToken")
+      vendorToken
     ) {
       // When browsing inside vendor portal or calling vendor rating endpoints as a vendor
-      token = localStorage.getItem("vendorToken");
+      token = vendorToken;
     }
 
     /**
@@ -83,7 +87,9 @@ api.interceptors.request.use(
      * ================================================
      */
     else {
-      token = localStorage.getItem("token");
+      token =
+        sessionStorage.getItem("token") ||
+        localStorage.getItem("token");
     }
 
     /**

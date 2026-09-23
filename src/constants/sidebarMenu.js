@@ -89,11 +89,6 @@ export const sidebarMenu = [
     path: "/ratings",
   },
   {
-    title: "Reports",
-    icon: BarChart3,
-    path: "/reports",
-  },
-  {
     title: "Settings",
     icon: Settings,
     path: "/settings",

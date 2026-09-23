@@ -27,8 +27,11 @@ const PortalGateway = () => {
   const { vendorUser } = useVendorAuth ? useVendorAuth() : { vendorUser: null };
 
   const handleAdminEnter = () => {
-    // If admin/staff is already logged in, navigate straight to dashboard
-    if (user && localStorage.getItem("token")) {
+    // If admin/staff is already logged in in this tab, navigate straight to dashboard
+    const adminToken =
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("token");
+    if (user && adminToken) {
       navigate("/dashboard");
     } else {
       navigate("/login");
@@ -36,8 +39,11 @@ const PortalGateway = () => {
   };
 
   const handleVendorEnter = () => {
-    // If vendor is already logged in, navigate straight to vendor dashboard
-    if (vendorUser && localStorage.getItem("vendorToken")) {
+    // If vendor is already logged in in this tab, navigate straight to vendor dashboard
+    const vToken =
+      sessionStorage.getItem("vendorToken") ||
+      localStorage.getItem("vendorToken");
+    if (vendorUser && vToken) {
       navigate("/vendor/dashboard");
     } else {
       navigate("/vendor/login");

@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   User,
   Lock,
@@ -97,23 +97,16 @@ const Login = () => {
     }
 
     // ---------------------------------------------------
-    // VENDOR
+    // VENDOR (Access Denied on Staff/Admin Login)
     // ---------------------------------------------------
 
     if (user?.role === "VENDOR") {
-      console.log(
-        "VENDOR detected"
+      console.warn(
+        "Access denied: Vendor account detected on admin portal."
       );
 
-      console.log(
-        "Redirecting to Vendor Dashboard..."
-      );
-
-      navigate(
-        "/vendor/dashboard",
-        {
-          replace: true,
-        }
+      setErrorMessage(
+        "Access denied. Vendor accounts must log in via the Vendor Portal."
       );
 
       return;
@@ -272,6 +265,14 @@ const Login = () => {
         throw new Error(
           "Invalid login response from server."
         );
+      }
+
+      // Block VENDOR role from logging in via Admin portal
+      if (data.user?.role === "VENDOR") {
+        setErrorMessage(
+          "Access denied. Vendor accounts must log in via the Vendor Portal."
+        );
+        return;
       }
 
       // =================================================
@@ -522,9 +523,19 @@ const Login = () => {
 
             {/* Error Message Alert */}
             {errorMessage && (
-              <div className="mb-6 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2.5 animate-in fade-in duration-200">
-                <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="mb-6 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-2.5 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+                {errorMessage.includes("Vendor Portal") && (
+                  <Link
+                    to="/vendor/login"
+                    className="font-bold underline text-rose-800 hover:text-rose-950 shrink-0 text-xs ml-2"
+                  >
+                    Vendor Portal &rarr;
+                  </Link>
+                )}
               </div>
             )}
 

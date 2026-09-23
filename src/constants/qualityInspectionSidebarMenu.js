@@ -56,12 +56,6 @@ export const qualityInspectionSidebarMenu = [
   },
 
   {
-    title: "Reports",
-    icon: BarChart3,
-    path: "/quality-inspection/reports",
-  },
-
-  {
     title: "Analytics",
     icon: TrendingUp,
     path: "/quality-inspection/analytics",

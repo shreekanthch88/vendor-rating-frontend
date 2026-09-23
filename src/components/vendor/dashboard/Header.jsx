@@ -1,5 +1,4 @@
 import {
-  Search,
   Bell,
   Settings,
   ChevronDown,
@@ -38,23 +37,6 @@ const Header = () => {
         <p className="text-sm text-slate-500">
           {today}
         </p>
-
-      </div>
-
-      {/* Center */}
-
-      <div className="relative w-[420px]">
-
-        <Search
-          size={18}
-          className="absolute left-4 top-4 text-slate-400"
-        />
-
-        <input
-          type="text"
-          placeholder="Search Purchase Orders..."
-          className="h-12 w-full rounded-xl border border-slate-300 pl-11 pr-4 outline-none focus:border-blue-600"
-        />
 
       </div>
 

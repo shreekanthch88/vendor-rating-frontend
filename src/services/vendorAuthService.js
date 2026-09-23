@@ -28,20 +28,25 @@ export const vendorLogin = async (
 export const saveVendorSession = (
   data
 ) => {
-  localStorage.setItem(
+  sessionStorage.setItem(
     "vendorToken",
     data.token
   );
 
-  localStorage.setItem(
+  sessionStorage.setItem(
     "vendorUser",
     JSON.stringify(data.user)
   );
 
-  localStorage.setItem(
+  sessionStorage.setItem(
     "vendorProfile",
     JSON.stringify(data.vendor)
   );
+
+  // Clear legacy localStorage keys so they do not leak into fresh tabs
+  localStorage.removeItem("vendorToken");
+  localStorage.removeItem("vendorUser");
+  localStorage.removeItem("vendorProfile");
 };
 
 /**
@@ -50,9 +55,15 @@ export const saveVendorSession = (
  * ============================================
  */
 export const getVendorToken = () => {
-  return localStorage.getItem(
-    "vendorToken"
-  );
+  let token = sessionStorage.getItem("vendorToken");
+  if (!token) {
+    token = localStorage.getItem("vendorToken");
+    if (token) {
+      sessionStorage.setItem("vendorToken", token);
+      localStorage.removeItem("vendorToken");
+    }
+  }
+  return token;
 };
 
 /**
@@ -61,14 +72,20 @@ export const getVendorToken = () => {
  * ============================================
  */
 export const getVendorUser = () => {
-  const user =
-    localStorage.getItem(
-      "vendorUser"
-    );
+  let user = sessionStorage.getItem("vendorUser");
+  if (!user) {
+    user = localStorage.getItem("vendorUser");
+    if (user) {
+      sessionStorage.setItem("vendorUser", user);
+      localStorage.removeItem("vendorUser");
+    }
+  }
 
-  return user
-    ? JSON.parse(user)
-    : null;
+  try {
+    return user ? JSON.parse(user) : null;
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -76,17 +93,22 @@ export const getVendorUser = () => {
  * Get Vendor Profile
  * ============================================
  */
-export const getVendorProfile =
-  () => {
-    const vendor =
-      localStorage.getItem(
-        "vendorProfile"
-      );
+export const getVendorProfile = () => {
+  let vendor = sessionStorage.getItem("vendorProfile");
+  if (!vendor) {
+    vendor = localStorage.getItem("vendorProfile");
+    if (vendor) {
+      sessionStorage.setItem("vendorProfile", vendor);
+      localStorage.removeItem("vendorProfile");
+    }
+  }
 
-    return vendor
-      ? JSON.parse(vendor)
-      : null;
-  };
+  try {
+    return vendor ? JSON.parse(vendor) : null;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * ============================================
@@ -94,17 +116,13 @@ export const getVendorProfile =
  * ============================================
  */
 export const logoutVendor = () => {
-  localStorage.removeItem(
-    "vendorToken"
-  );
+  sessionStorage.removeItem("vendorToken");
+  sessionStorage.removeItem("vendorUser");
+  sessionStorage.removeItem("vendorProfile");
 
-  localStorage.removeItem(
-    "vendorUser"
-  );
-
-  localStorage.removeItem(
-    "vendorProfile"
-  );
+  localStorage.removeItem("vendorToken");
+  localStorage.removeItem("vendorUser");
+  localStorage.removeItem("vendorProfile");
 };
 
 /**
@@ -112,9 +130,6 @@ export const logoutVendor = () => {
  * Check Login
  * ============================================
  */
-export const isVendorLoggedIn =
-  () => {
-    return !!localStorage.getItem(
-      "vendorToken"
-    );
-  };
+export const isVendorLoggedIn = () => {
+  return !!getVendorToken();
+};

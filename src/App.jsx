@@ -42,6 +42,11 @@ import VendorPurchaseOrderDetails from "./pages/vendor/VendorPurchaseOrderDetail
 import VendorCreateDispatch from "./pages/vendor/VendorCreateDispatch";
 import VendorDispatchDetails from "./pages/vendor/VendorDispatchDetails";
 import VendorDispatches from "./pages/vendor/VendorDispatches";
+import VendorInvoices from "./pages/vendor/VendorInvoices";
+import VendorCreateInvoice from "./pages/vendor/VendorCreateInvoice";
+import VendorInvoiceDetails from "./pages/vendor/VendorInvoiceDetails";
+import VendorPayments from "./pages/vendor/VendorPayments";
+import VendorProfile from "./pages/vendor/Profile";
 // ==================================================
 // VENDOR LAYOUT & AUTHENTICATION
 // ==================================================
@@ -873,6 +878,97 @@ function App() {
     </VendorAuthProvider>
   }
 />
+
+{/* ==================================================
+    VENDOR INVOICES
+    ================================================== */}
+
+<Route
+  path="/vendor/invoices"
+  element={
+    <VendorAuthProvider>
+      <VendorProtectedRoute>
+        <VendorLayout>
+          <VendorInvoices />
+        </VendorLayout>
+      </VendorProtectedRoute>
+    </VendorAuthProvider>
+  }
+/>
+
+<Route
+  path="/vendor/invoices/create"
+  element={
+    <VendorAuthProvider>
+      <VendorProtectedRoute>
+        <VendorLayout>
+          <VendorCreateInvoice />
+        </VendorLayout>
+      </VendorProtectedRoute>
+    </VendorAuthProvider>
+  }
+/>
+
+<Route
+  path="/vendor/invoices/create/:purchaseOrderId"
+  element={
+    <VendorAuthProvider>
+      <VendorProtectedRoute>
+        <VendorLayout>
+          <VendorCreateInvoice />
+        </VendorLayout>
+      </VendorProtectedRoute>
+    </VendorAuthProvider>
+  }
+/>
+
+<Route
+  path="/vendor/invoices/:id"
+  element={
+    <VendorAuthProvider>
+      <VendorProtectedRoute>
+        <VendorLayout>
+          <VendorInvoiceDetails />
+        </VendorLayout>
+      </VendorProtectedRoute>
+    </VendorAuthProvider>
+  }
+/>
+
+{/* ==================================================
+    VENDOR PAYMENTS
+    ================================================== */}
+
+<Route
+  path="/vendor/payments"
+  element={
+    <VendorAuthProvider>
+      <VendorProtectedRoute>
+        <VendorLayout>
+          <VendorPayments />
+        </VendorLayout>
+      </VendorProtectedRoute>
+    </VendorAuthProvider>
+  }
+/>
+
+{/* ==================================================
+    VENDOR PROFILE
+    ================================================== */}
+
+<Route
+  path="/vendor/profile"
+  element={
+    <VendorAuthProvider>
+      <VendorProtectedRoute>
+        <VendorLayout>
+          <VendorProfile />
+        </VendorLayout>
+      </VendorProtectedRoute>
+    </VendorAuthProvider>
+  }
+/>
+
 
 
         {/* ==================================================
