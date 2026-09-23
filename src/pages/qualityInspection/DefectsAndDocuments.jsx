@@ -12,6 +12,7 @@ import {
   Save,
   Trash2,
   Upload,
+  CheckCircle2,
 } from "lucide-react";
 
 import {
@@ -390,7 +391,10 @@ const DefectsAndDocuments = () => {
       const response =
         await updateQualityInspection(
           id,
-          inspection
+          {
+            ...inspection,
+            currentStep: 5,
+          }
         );
 
       setInspection(
@@ -438,7 +442,10 @@ const DefectsAndDocuments = () => {
 
       await updateQualityInspection(
         id,
-        inspection
+        {
+          ...inspection,
+          currentStep: 6,
+        }
       );
 
       navigate(
@@ -677,6 +684,7 @@ const DefectsAndDocuments = () => {
             number="2"
             title="Inspection Details"
             completed
+            onClick={() => navigate(`/quality-inspection/inspections/${id}`)}
           />
 
           <StepLine />
@@ -685,6 +693,7 @@ const DefectsAndDocuments = () => {
             number="3"
             title="Material Inspection"
             completed
+            onClick={() => navigate(`/quality-inspection/inspections/${id}/material-inspection`)}
           />
 
           <StepLine />
@@ -693,6 +702,7 @@ const DefectsAndDocuments = () => {
             number="4"
             title="Specifications"
             completed
+            onClick={() => navigate(`/quality-inspection/inspections/${id}/specifications`)}
           />
 
           <StepLine />
@@ -701,6 +711,7 @@ const DefectsAndDocuments = () => {
             number="5"
             title="Defects & Docs"
             active
+            onClick={() => navigate(`/quality-inspection/inspections/${id}/defects-documents`)}
           />
 
           <StepLine />
@@ -708,6 +719,7 @@ const DefectsAndDocuments = () => {
           <Step
             number="6"
             title="Final Decision"
+            onClick={() => navigate(`/quality-inspection/inspections/${id}/final-decision`)}
           />
 
         </div>
@@ -732,9 +744,39 @@ const DefectsAndDocuments = () => {
 
       {success && (
 
-        <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="mb-5 flex flex-col gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
 
-          {success}
+          <div className="flex items-center gap-2">
+
+            <CheckCircle2 size={18} className="shrink-0 text-green-600" />
+
+            <span className="font-semibold">{success}</span>
+
+          </div>
+
+
+          <div className="flex items-center gap-2">
+
+            <button
+              type="button"
+              onClick={() => setSuccess("")}
+              className="rounded-lg border border-green-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100"
+            >
+              Continue Editing
+            </button>
+
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/quality-inspection/inspections")
+              }
+              className="rounded-lg bg-green-700 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-green-800"
+            >
+              Back to Inspections List →
+            </button>
+
+          </div>
 
         </div>
 
@@ -1540,11 +1582,16 @@ const Step = ({
   title,
   active = false,
   completed = false,
+  onClick,
 }) => {
 
   return (
 
-    <div className="flex items-center gap-2">
+    <div
+      onClick={onClick}
+      className={`flex items-center gap-2 ${
+        onClick ? "cursor-pointer transition hover:opacity-80" : ""
+      }`}>
 
       <div
         className={`

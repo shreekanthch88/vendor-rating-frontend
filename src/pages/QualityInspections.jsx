@@ -195,19 +195,50 @@ const QualityInspections = () => {
     }
 
 
-    /*
-     * Draft / In Progress
-     *
-     * Continue the existing inspection.
-     *
-     * Completed / final inspections
-     * will use the same detail route
-     * for viewing.
-     */
+    const inspectionStatus =
+      inspection.status || "Draft";
 
-    navigate(
-      `/quality-inspection/inspections/${inspection._id}`
-    );
+    // For completed or submitted inspections, open the details
+    if (
+      inspectionStatus === "Completed" ||
+      inspectionStatus === "Submitted"
+    ) {
+      navigate(
+        `/quality-inspection/inspections/${inspection._id}`
+      );
+      return;
+    }
+
+    // For drafts, resume at the step where it was last drafted
+    const step = Number(inspection.currentStep) || 2;
+    switch (step) {
+      case 3:
+        navigate(
+          `/quality-inspection/inspections/${inspection._id}/material-inspection`
+        );
+        break;
+      case 4:
+        navigate(
+          `/quality-inspection/inspections/${inspection._id}/specifications`
+        );
+        break;
+      case 5:
+        navigate(
+          `/quality-inspection/inspections/${inspection._id}/defects-documents`
+        );
+        break;
+      case 6:
+        navigate(
+          `/quality-inspection/inspections/${inspection._id}/final-decision`
+        );
+        break;
+      case 2:
+      default:
+        navigate(
+          `/quality-inspection/inspections/${inspection._id}`
+        );
+        break;
+    }
 
   };
 
@@ -344,6 +375,12 @@ const QualityInspections = () => {
           "bg-yellow-100 text-yellow-700"
         );
 
+      case "Accepted with Damage":
+
+        return (
+          "bg-blue-100 text-blue-700"
+        );
+
       case "Rejected":
 
         return (
@@ -351,9 +388,16 @@ const QualityInspections = () => {
         );
 
       case "Conditional":
+      case "Conditional Acceptance":
 
         return (
           "bg-orange-100 text-orange-700"
+        );
+
+      case "Hold":
+
+        return (
+          "bg-purple-100 text-purple-700"
         );
 
       default:
@@ -943,12 +987,14 @@ const QualityInspections = () => {
                               text-xs
                               font-semibold
                               ${getResultClass(
+                                inspection.overallResult ||
                                 inspection.result
                               )}
                             `}
                           >
 
                             {
+                              inspection.overallResult ||
                               inspection.result ||
                               "Pending"
                             }
