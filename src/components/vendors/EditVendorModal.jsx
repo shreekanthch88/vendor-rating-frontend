@@ -30,6 +30,7 @@ const EditVendorModal = ({
       }
 
       alert(displayMessage || "Failed to update vendor.");
+      throw error;
     }
   };
 
@@ -41,6 +42,7 @@ const EditVendorModal = ({
       title="Edit Vendor"
       submitText="Update Vendor"
       onSubmit={handleUpdate}
+      isEdit={true}
     />
   );
 };

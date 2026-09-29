@@ -41,10 +41,18 @@ const EditVendorUserModal = ({
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const phoneRegex = /^[6-9]\d{9}$/;
+
   const validate = () => {
     const newErrors = {};
     if (!formData.name.trim()) {
       newErrors.name = "Full Name is required.";
+    }
+    if (formData.phone && formData.phone.trim()) {
+      if (!phoneRegex.test(formData.phone.trim())) {
+        newErrors.phone =
+          "Please enter a valid 10-digit mobile number (e.g. 9876543210).";
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -63,11 +71,15 @@ const EditVendorUserModal = ({
       onClose();
     } catch (error) {
       console.error("Update Vendor User Error:", error);
-      alert(
+      const msg =
         error.response?.data?.message ||
         error.message ||
-        "Failed to update Vendor User."
-      );
+        "Failed to update Vendor User.";
+      if (msg.toLowerCase().includes("phone")) {
+        setErrors((prev) => ({ ...prev, phone: msg }));
+      } else {
+        alert(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -140,9 +152,14 @@ const EditVendorUserModal = ({
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="Mobile number"
-                className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="10-digit mobile number"
+                className={`w-full rounded-lg border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.phone ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {errors.phone && (
+                <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
+              )}
             </div>
 
             <div>

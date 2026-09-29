@@ -32,66 +32,51 @@ const Vendors = () => {
   const [dashboardKey, setDashboardKey] = useState(0);
   
 
-  const isInitialMount = useRef(true);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const loadVendors = useCallback(
-    async (
-      targetPage = page,
-      targetSearch = search,
-      targetStatus = statusFilter
-    ) => {
-      try {
-        setLoading(true);
-
-        const data = await getAllVendors(
-          targetPage,
-          limit,
-          targetSearch.trim(),
-          targetStatus
-        );
-
-        setVendors(data.vendors || []);
-        setTotalPages(data.pages || 1);
-        setTotalVendors(data.total || 0);
-      } catch (error) {
-        console.error("Error loading vendors:", error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [limit, page, search, statusFilter]
-  );
-
-  // Load when page or statusFilter changes
+  // Debounce search input
   useEffect(() => {
-    loadVendors(page, search, statusFilter);
-  }, [page, statusFilter]);
-
-  // Live auto-search with debounce as user types
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
     const timer = setTimeout(() => {
-      setPage(1);
-      loadVendors(1, search, statusFilter);
+      setDebouncedSearch(search);
     }, 350);
-
     return () => clearTimeout(timer);
   }, [search]);
+
+  const loadVendors = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const data = await getAllVendors(
+        page,
+        limit,
+        debouncedSearch.trim(),
+        statusFilter
+      );
+
+      setVendors(data.vendors || []);
+      setTotalPages(data.pages || 1);
+      setTotalVendors(data.total || 0);
+    } catch (error) {
+      console.error("Error loading vendors:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, debouncedSearch, statusFilter]);
+
+  useEffect(() => {
+    loadVendors();
+  }, [loadVendors]);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     setPage(1);
-    loadVendors(1, search, statusFilter);
+    setDebouncedSearch(search);
   };
 
   const handleClearSearch = () => {
     setSearch("");
+    setDebouncedSearch("");
     setPage(1);
-    loadVendors(1, "", statusFilter);
   };
 
   const handleStatusFilterChange = (e) => {

@@ -243,16 +243,105 @@ const [fulfillmentLoading, setFulfillmentLoading] =
    */
 
   const handleExport = (purchaseOrder) => {
-
-    console.log(
-      "Export Purchase Order:",
-      purchaseOrder
-    );
-
-    alert(
-      "Export PDF feature will be connected next."
-    );
-
+    const po = purchaseOrder || selectedPurchaseOrder;
+    if (!po) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Purchase Order - ${po.poNumber || "PO"}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #1e293b; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+            .title { font-size: 24px; font-weight: bold; color: #1e40af; }
+            .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: #e0f2fe; color: #0369a1; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+            .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; }
+            .card h3 { margin-top: 0; font-size: 14px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+            .label { color: #64748b; font-weight: 500; }
+            .val { font-weight: 600; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
+            th { background: #f1f5f9; text-align: left; padding: 10px; font-size: 12px; border-bottom: 2px solid #cbd5e1; color: #475569; }
+            td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+            .totals { width: 300px; margin-left: auto; margin-top: 15px; font-size: 13px; }
+            .totals .row { padding: 4px 0; }
+            .totals .grand { font-size: 16px; font-weight: bold; color: #1e40af; border-top: 2px solid #cbd5e1; padding-top: 8px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">PURCHASE ORDER</div>
+              <div style="color: #64748b; font-size: 13px; margin-top: 4px;">PO Number: <strong>${po.poNumber || "-"}</strong></div>
+            </div>
+            <div>
+              <span class="badge">${po.status || "Draft"}</span>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Vendor Details</h3>
+              <div class="row"><span class="label">Vendor:</span><span class="val">${po.vendor?.vendorName || po.vendor?.companyName || "-"}</span></div>
+              <div class="row"><span class="label">Code:</span><span class="val">${po.vendor?.vendorCode || "-"}</span></div>
+              <div class="row"><span class="label">Category:</span><span class="val">${po.vendor?.vendorCategory || "-"}</span></div>
+              <div class="row"><span class="label">Email:</span><span class="val">${po.vendor?.email || "-"}</span></div>
+              <div class="row"><span class="label">Mobile:</span><span class="val">${po.vendor?.mobile || po.vendor?.phone || "-"}</span></div>
+              <div class="row"><span class="label">GST:</span><span class="val">${po.vendor?.gstNumber || "-"}</span></div>
+            </div>
+            <div class="card">
+              <h3>Order Information</h3>
+              <div class="row"><span class="label">Order Date:</span><span class="val">${po.orderDate ? new Date(po.orderDate).toLocaleDateString('en-IN') : "-"}</span></div>
+              <div class="row"><span class="label">Expected Delivery:</span><span class="val">${po.expectedDeliveryDate ? new Date(po.expectedDeliveryDate).toLocaleDateString('en-IN') : "-"}</span></div>
+              <div class="row"><span class="label">Payment Terms:</span><span class="val">${po.paymentTerms || "Net 30"}</span></div>
+              <div class="row"><span class="label">Currency:</span><span class="val">${po.currency || "INR"}</span></div>
+              <div class="row"><span class="label">Priority:</span><span class="val">${po.priority || "Medium"}</span></div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Material</th>
+                <th>Unit</th>
+                <th style="text-align: right;">Quantity</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Total Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(po.items || []).map((it, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><strong>${it.materialName || it.material?.materialName || it.material?.materialCode || "Item"}</strong></td>
+                  <td>${it.unitOfMeasure || it.material?.unitOfMeasure || "Unit"}</td>
+                  <td style="text-align: right;">${it.quantity}</td>
+                  <td style="text-align: right;">₹${Number(it.unitPrice || 0).toFixed(2)}</td>
+                  <td style="text-align: right;">₹${Number(it.totalPrice || (it.quantity * it.unitPrice) || 0).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="totals">
+            <div class="row"><span class="label">Subtotal:</span><span class="val">₹${Number(po.subtotal || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">Tax Amount:</span><span class="val">₹${Number(po.taxAmount || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">Freight Charges:</span><span class="val">₹${Number(po.freightCharges || 0).toFixed(2)}</span></div>
+            <div class="row grand"><span class="label">Grand Total:</span><span class="val">₹${Number(po.grandTotal || 0).toFixed(2)}</span></div>
+          </div>
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   /**
@@ -275,14 +364,22 @@ const [fulfillmentLoading, setFulfillmentLoading] =
 
     setShowView(true);
 
-    const response =
-      await getPurchaseOrderFulfillment(
-        purchaseOrder._id
-      );
+    const [fulfillmentRes, fullPORes] = await Promise.allSettled([
+      getPurchaseOrderFulfillment(purchaseOrder._id),
+      getPurchaseOrderById(purchaseOrder._id),
+    ]);
 
-    setPurchaseOrderFulfillment(
-      response.data || null
-    );
+    if (fulfillmentRes.status === "fulfilled") {
+      setPurchaseOrderFulfillment(
+        fulfillmentRes.value.data || null
+      );
+    }
+
+    if (fullPORes.status === "fulfilled" && (fullPORes.value.data || fullPORes.value)) {
+      setSelectedPurchaseOrder(
+        fullPORes.value.data || fullPORes.value
+      );
+    }
 
   } catch (error) {
 

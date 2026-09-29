@@ -17,12 +17,22 @@ const ResetVendorPasswordModal = ({
 
   if (!isOpen || !user || !vendor) return null;
 
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (!password) {
+      setError("New password is required.");
+      return;
+    }
+
+    if (!strongPasswordRegex.test(password)) {
+      setError(
+        "Password must be at least 8 characters long and contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character."
+      );
       return;
     }
 
@@ -98,6 +108,9 @@ const ResetVendorPasswordModal = ({
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Must be at least 8 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special symbol.
+            </p>
           </div>
 
           <div>

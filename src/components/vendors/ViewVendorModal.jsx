@@ -9,7 +9,10 @@ import {
   getLatestVendorRating,
   getVendorRatings,
 } from "../../services/vendorRatingService";
-import { getAllPurchaseOrders } from "../../services/purchaseOrderService";
+import {
+  getAllPurchaseOrders,
+  getPurchaseOrderById,
+} from "../../services/purchaseOrderService";
 
 import {
   Building2,
@@ -58,6 +61,7 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
 
   // Purchase Orders state
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [allVendorPOs, setAllVendorPOs] = useState([]);
   const [poLoading, setPoLoading] = useState(false);
   const [poSearch, setPoSearch] = useState("");
   const [poStatusFilter, setPoStatusFilter] = useState("");
@@ -93,6 +97,23 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
     }
   }, [vendor]);
 
+  const loadAllVendorPOs = useCallback(async () => {
+    if (!vendor?._id) return;
+    try {
+      const res = await getAllPurchaseOrders(
+        1,
+        200,
+        "",
+        "",
+        vendor._id
+      );
+      setAllVendorPOs(res.purchaseOrders || []);
+    } catch (err) {
+      console.error("Error loading all vendor POs:", err);
+      setAllVendorPOs([]);
+    }
+  }, [vendor]);
+
   const loadPurchaseOrders = useCallback(async () => {
     if (!vendor?._id) return;
     try {
@@ -118,8 +139,9 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
       loadPerformanceData();
       loadRatingsList();
       loadPurchaseOrders();
+      loadAllVendorPOs();
     }
-  }, [isOpen, vendor, loadPerformanceData, loadRatingsList, loadPurchaseOrders]);
+  }, [isOpen, vendor, loadPerformanceData, loadRatingsList, loadPurchaseOrders, loadAllVendorPOs]);
 
   if (!isOpen || !vendor) return null;
 
@@ -127,22 +149,142 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
      Calculations & Formatters
   ========================================================================= */
 
-  const totalPOAmount = purchaseOrders.reduce(
+  const totalPOAmount = allVendorPOs.reduce(
     (sum, po) => sum + Number(po.grandTotal || 0),
     0
   );
 
-  const completedPOCount = purchaseOrders.filter((po) =>
-    ["Completed", "Delivered", "Fulfilled"].includes(po.status)
+  const completedPOCount = allVendorPOs.filter((po) =>
+    ["Completed", "Delivered", "Fulfilled", "Closed"].includes(po.status) ||
+    (Array.isArray(po.items) && po.items.length > 0 && po.items.every((it) => (it.receivedQuantity || 0) >= (it.quantity || 0) && it.quantity > 0))
   ).length;
 
-  const openPOCount = purchaseOrders.filter((po) =>
-    ["Draft", "Submitted", "Approved", "Sent", "Accepted"].includes(po.status)
+  const openPOCount = allVendorPOs.filter((po) =>
+    ["Draft", "Submitted", "Approved", "Sent", "Accepted", "Partially Delivered"].includes(po.status) &&
+    !["Completed", "Delivered", "Fulfilled", "Closed"].includes(po.status)
   ).length;
 
-  const cancelledPOCount = purchaseOrders.filter((po) =>
+  const cancelledPOCount = allVendorPOs.filter((po) =>
     ["Cancelled", "Rejected"].includes(po.status)
   ).length;
+
+  const handleViewPO = async (po) => {
+    try {
+      setSelectedPO(po);
+      setShowPOModal(true);
+      const res = await getPurchaseOrderById(po._id);
+      if (res?.data || res) {
+        setSelectedPO(res.data || res);
+      }
+    } catch (err) {
+      console.error("Error fetching full PO details:", err);
+    }
+  };
+
+  const handlePrintPO = () => {
+    window.print();
+  };
+
+  const handleExportPO = (po) => {
+    if (!po) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Purchase Order - ${po.poNumber || "PO"}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #1e293b; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+            .title { font-size: 24px; font-weight: bold; color: #1e40af; }
+            .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: #e0f2fe; color: #0369a1; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+            .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; }
+            .card h3 { margin-top: 0; font-size: 14px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+            .label { color: #64748b; font-weight: 500; }
+            .val { font-weight: 600; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
+            th { background: #f1f5f9; text-align: left; padding: 10px; font-size: 12px; border-bottom: 2px solid #cbd5e1; color: #475569; }
+            td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+            .totals { width: 300px; margin-left: auto; margin-top: 15px; font-size: 13px; }
+            .totals .row { padding: 4px 0; }
+            .totals .grand { font-size: 16px; font-weight: bold; color: #1e40af; border-top: 2px solid #cbd5e1; padding-top: 8px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">PURCHASE ORDER</div>
+              <div style="color: #64748b; font-size: 13px; margin-top: 4px;">PO Number: <strong>${po.poNumber || "-"}</strong></div>
+            </div>
+            <div>
+              <span class="badge">${po.status || "Draft"}</span>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Vendor Details</h3>
+              <div class="row"><span class="label">Vendor:</span><span class="val">${po.vendor?.vendorName || po.vendor?.companyName || "-"}</span></div>
+              <div class="row"><span class="label">Code:</span><span class="val">${po.vendor?.vendorCode || "-"}</span></div>
+              <div class="row"><span class="label">Category:</span><span class="val">${po.vendor?.vendorCategory || "-"}</span></div>
+              <div class="row"><span class="label">Email:</span><span class="val">${po.vendor?.email || "-"}</span></div>
+              <div class="row"><span class="label">Mobile:</span><span class="val">${po.vendor?.mobile || po.vendor?.phone || "-"}</span></div>
+              <div class="row"><span class="label">GST:</span><span class="val">${po.vendor?.gstNumber || "-"}</span></div>
+            </div>
+            <div class="card">
+              <h3>Order Information</h3>
+              <div class="row"><span class="label">Order Date:</span><span class="val">${po.orderDate ? new Date(po.orderDate).toLocaleDateString('en-IN') : "-"}</span></div>
+              <div class="row"><span class="label">Expected Delivery:</span><span class="val">${po.expectedDeliveryDate ? new Date(po.expectedDeliveryDate).toLocaleDateString('en-IN') : "-"}</span></div>
+              <div class="row"><span class="label">Payment Terms:</span><span class="val">${po.paymentTerms || "Net 30"}</span></div>
+              <div class="row"><span class="label">Currency:</span><span class="val">${po.currency || "INR"}</span></div>
+              <div class="row"><span class="label">Priority:</span><span class="val">${po.priority || "Medium"}</span></div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Material</th>
+                <th>Unit</th>
+                <th style="text-align: right;">Quantity</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Total Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(po.items || []).map((it, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><strong>${it.materialName || it.material?.materialName || it.material?.materialCode || "Item"}</strong></td>
+                  <td>${it.unitOfMeasure || it.material?.unitOfMeasure || "Unit"}</td>
+                  <td style="text-align: right;">${it.quantity}</td>
+                  <td style="text-align: right;">₹${Number(it.unitPrice || 0).toFixed(2)}</td>
+                  <td style="text-align: right;">₹${Number(it.totalPrice || (it.quantity * it.unitPrice) || 0).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="totals">
+            <div class="row"><span class="label">Subtotal:</span><span class="val">₹${Number(po.subtotal || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">Tax Amount:</span><span class="val">₹${Number(po.taxAmount || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">Freight Charges:</span><span class="val">₹${Number(po.freightCharges || 0).toFixed(2)}</span></div>
+            <div class="row grand"><span class="label">Grand Total:</span><span class="val">₹${Number(po.grandTotal || 0).toFixed(2)}</span></div>
+          </div>
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
 
   const formatDate = (date) => {
     if (!date) return "—";
@@ -456,7 +598,7 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <PerformanceCard
                   title="Total Orders"
-                  value={purchaseOrders.length}
+                  value={allVendorPOs.length}
                   subtitle="Purchase orders issued"
                 />
                 <PerformanceCard
@@ -775,10 +917,7 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
                             </td>
                             <td className="px-5 py-4 text-center">
                               <button
-                                onClick={() => {
-                                  setSelectedPO(po);
-                                  setShowPOModal(true);
-                                }}
+                                onClick={() => handleViewPO(po)}
                                 className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition"
                               >
                                 <Eye size={14} />
@@ -1146,6 +1285,8 @@ const ViewVendorModal = ({ isOpen, vendor, onClose }) => {
             setShowPOModal(false);
             setSelectedPO(null);
           }}
+          onPrint={handlePrintPO}
+          onExport={handleExportPO}
         />
       )}
 

@@ -69,37 +69,38 @@ const AddVendorUserModal = ({
       Validation
   ============================ */
 
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  const phoneRegex = /^[6-9]\d{9}$/;
+
   const validate = () => {
     let newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name =
-        "Full Name is required.";
+      newErrors.name = "Full Name is required.";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email =
-        "Email is required.";
+      newErrors.email = "Email is required.";
     }
 
-    if (!formData.password.trim()) {
+    if (!formData.password) {
+      newErrors.password = "Password is required.";
+    } else if (!strongPasswordRegex.test(formData.password)) {
       newErrors.password =
-        "Password is required.";
+        "Password must be at least 8 characters long and contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.";
     }
 
-    if (
-      formData.password &&
-      formData.password.length < 6
-    ) {
-      newErrors.password =
-        "Minimum 6 characters.";
+    if (formData.phone && formData.phone.trim()) {
+      if (!phoneRegex.test(formData.phone.trim())) {
+        newErrors.phone =
+          "Please enter a valid 10-digit mobile number (e.g. 9876543210).";
+      }
     }
 
     setErrors(newErrors);
 
-    return (
-      Object.keys(newErrors).length === 0
-    );
+    return Object.keys(newErrors).length === 0;
   };
 
     /* ============================
@@ -129,11 +130,20 @@ const AddVendorUserModal = ({
 
     } catch (error) {
       console.error(error);
-
-      alert(
+      const msg =
         error.response?.data?.message ||
-          "Failed to create Vendor User."
-      );
+        error.message ||
+        "Failed to create Vendor User.";
+
+      if (msg.toLowerCase().includes("phone")) {
+        setErrors((prev) => ({ ...prev, phone: msg }));
+      } else if (msg.toLowerCase().includes("email")) {
+        setErrors((prev) => ({ ...prev, email: msg }));
+      } else if (msg.toLowerCase().includes("password")) {
+        setErrors((prev) => ({ ...prev, password: msg }));
+      } else {
+        alert(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -307,9 +317,13 @@ const AddVendorUserModal = ({
 
             </div>
 
-            {errors.password && (
+            {errors.password ? (
               <p className="mt-1 text-sm text-red-500">
                 {errors.password}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500">
+                Must be at least 8 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special symbol.
               </p>
             )}
 
@@ -330,9 +344,17 @@ const AddVendorUserModal = ({
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="Enter Mobile Number"
-                className="w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter 10-digit mobile number"
+                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.phone ? "border-red-500" : ""
+                }`}
               />
+
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.phone}
+                </p>
+              )}
 
             </div>
 

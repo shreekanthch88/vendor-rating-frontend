@@ -107,7 +107,7 @@ const VendorUsersTab = ({ vendor }) => {
 
     try {
       await deleteVendorUser(vendor._id, user._id);
-      alert("Vendor user deactivated successfully.");
+      alert("Vendor user deleted successfully.");
       await loadUsers();
     } catch (err) {
       console.error("Delete user error:", err);

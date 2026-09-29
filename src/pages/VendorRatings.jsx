@@ -102,6 +102,16 @@ const VendorRatings = () => {
   const [search, setSearch] =
     useState("");
 
+  const [debouncedSearch, setDebouncedSearch] =
+    useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const [status, setStatus] =
     useState("");
 
@@ -262,6 +272,8 @@ const VendorRatings = () => {
             vendorId:
               vendorFilter,
             status,
+            search:
+              debouncedSearch,
           });
 
 
@@ -467,6 +479,7 @@ const VendorRatings = () => {
       limit,
       vendorFilter,
       status,
+      debouncedSearch,
     ]);
 
 

@@ -304,53 +304,7 @@ const VendorRatingEvaluationModal = ({
 
 
       /**
-       * Validate all entered parameter scores.
-       */
-
-      for (
-        const parameter of parameters
-      ) {
-
-        const value =
-          evaluatorScores[
-            parameter.key
-          ];
-
-
-        if (
-          !validateScore(value)
-        ) {
-
-          setError(
-            `${parameter.label} score must be between 0 and 100.`
-          );
-
-          return;
-        }
-
-        // Validate adjustment reason when evaluator score overrides system score
-        const sysVal = rating?.[parameter.key]?.systemScore;
-        if (
-          value !== "" &&
-          value !== null &&
-          value !== undefined &&
-          sysVal !== null &&
-          sysVal !== undefined &&
-          Number(value) !== Number(sysVal)
-        ) {
-          const reason = (adjustmentReasons[parameter.key] || "").trim();
-          if (!reason) {
-            setError(
-              `${parameter.label}: Adjustment reason is required when overriding system score (${sysVal} → ${value}).`
-            );
-            return;
-          }
-        }
-      }
-
-
-      /**
-       * Communication score.
+       * Validate Communication score.
        */
 
       if (
@@ -358,49 +312,13 @@ const VendorRatingEvaluationModal = ({
           communication.score
         )
       ) {
-
         setError(
           "Communication score must be between 0 and 100."
         );
-
         return;
       }
 
-
       setSaving(true);
-
-
-      /**
-       * Convert empty strings to null and attach adjustment reasons.
-       *
-       * This avoids sending fake zero values.
-       */
-
-      const cleanedEvaluatorScores = {};
-
-      parameters.forEach(
-        (parameter) => {
-
-          const value =
-            evaluatorScores[
-              parameter.key
-            ];
-
-          cleanedEvaluatorScores[
-            parameter.key
-          ] =
-            value === "" ||
-            value === null ||
-            value === undefined
-              ? null
-              : Number(value);
-
-          cleanedEvaluatorScores[
-            `${parameter.key}AdjustmentReason`
-          ] = (adjustmentReasons[parameter.key] || "").trim();
-        }
-      );
-
 
       const cleanedCommunication = {
         score:
@@ -421,33 +339,27 @@ const VendorRatingEvaluationModal = ({
           "",
       };
 
-
       /**
        * Send evaluation to backend.
-       *
-       * Backend calculates final scores.
+       * Operational scores are system-calculated; only communication
+       * and evaluator remarks are updated by the evaluator.
        */
 
       const response =
         await updateEvaluatorScores(
           rating._id,
           {
-            evaluatorScores:
-              cleanedEvaluatorScores,
-
+            evaluatorScores: {},
             communication:
               cleanedCommunication,
-
             remarks:
               remarks.trim(),
           }
         );
 
-
       if (onSuccess) {
         onSuccess(response);
       }
-
 
       onClose();
 
@@ -521,13 +433,11 @@ const VendorRatingEvaluationModal = ({
         <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
 
           <p className="text-sm font-semibold text-blue-900">
-            Evaluator Review
+            Evaluator Assessment & Review
           </p>
 
           <p className="mt-1 text-sm leading-5 text-blue-800">
-            Review the system-generated scores and enter
-            evaluator scores where required. Final rating
-            calculations are performed by the backend.
+            Operational parameters (Delivery, Quality, Fulfillment, Price, Response Time, PO Acceptance, Documentation) are automatically evaluated from transactional records. Evaluators review system metrics, assess <strong>Communication Performance</strong> (5% weight), and provide qualitative evaluation feedback.
           </p>
 
         </div>
@@ -569,7 +479,7 @@ const VendorRatingEvaluationModal = ({
                   </th>
 
                   <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Evaluator Score
+                    Evaluation Source
                   </th>
 
                 </tr>
@@ -586,13 +496,6 @@ const VendorRatingEvaluationModal = ({
                       rating[
                         parameter.key
                       ] || {};
-
-
-                    const evaluatorScore =
-                      evaluatorScores[
-                        parameter.key
-                      ];
-
 
                     return (
                       <tr
@@ -652,46 +555,13 @@ const VendorRatingEvaluationModal = ({
                         </td>
 
 
-                        {/* Evaluator Score */}
+                        {/* Source Status */}
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-center">
 
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={
-                              evaluatorScore
-                            }
-                            onChange={(event) =>
-                              handleScoreChange(
-                                parameter.key,
-                                event.target.value
-                              )
-                            }
-                            placeholder="Enter score"
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                          />
-
-                          {evaluatorScore !== "" &&
-                            evaluatorScore !== null &&
-                            evaluatorScore !== undefined &&
-                            data.systemScore !== null &&
-                            data.systemScore !== undefined &&
-                            Number(evaluatorScore) !== Number(data.systemScore) && (
-                              <div className="mt-2">
-                                <input
-                                  type="text"
-                                  value={adjustmentReasons[parameter.key] || ""}
-                                  onChange={(e) =>
-                                    handleReasonChange(parameter.key, e.target.value)
-                                  }
-                                  placeholder="Adjustment reason (required) *"
-                                  className="w-full rounded-md border border-amber-300 bg-amber-50/60 px-2.5 py-1.5 text-xs text-slate-800 outline-none placeholder:text-amber-700/60 focus:border-amber-500 focus:bg-white focus:ring-1 focus:ring-amber-500"
-                                />
-                              </div>
-                            )}
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200">
+                            System Calculated
+                          </span>
 
                         </td>
 
@@ -713,15 +583,21 @@ const VendorRatingEvaluationModal = ({
             COMMUNICATION
         ================================================= */}
 
-        <div className="rounded-lg border border-gray-200 p-4">
+        <div className="rounded-xl border-2 border-blue-200 bg-blue-50/30 p-5 shadow-sm">
 
-          <h3 className="text-sm font-semibold text-gray-900">
-            Communication
-          </h3>
-
-          <p className="mt-1 text-xs text-gray-500">
-            Communication is evaluator-assessed.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-gray-900">
+                Communication Performance
+              </h3>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Communication is evaluated directly by the procurement evaluator.
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+              Evaluator Assessed (Weight: 5%)
+            </span>
+          </div>
 
 
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">

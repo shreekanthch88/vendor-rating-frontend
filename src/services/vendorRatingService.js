@@ -129,6 +129,7 @@ export const getVendorRatings = async ({
   limit = 10,
   vendorId = "",
   status = "",
+  search = "",
 } = {}) => {
 
   const response = await api.get(
@@ -139,6 +140,7 @@ export const getVendorRatings = async ({
         limit,
         vendorId,
         status,
+        search,
       },
     }
   );
