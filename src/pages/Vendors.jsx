@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Layout from "../layout/Layout";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 
 import VendorDashboardCards from "../components/vendors/VendorDashboardCards";
 import VendorTable from "../components/vendors/VendorTable";
@@ -32,30 +32,72 @@ const Vendors = () => {
   const [dashboardKey, setDashboardKey] = useState(0);
   
 
+  const isInitialMount = useRef(true);
+
+  const loadVendors = useCallback(
+    async (
+      targetPage = page,
+      targetSearch = search,
+      targetStatus = statusFilter
+    ) => {
+      try {
+        setLoading(true);
+
+        const data = await getAllVendors(
+          targetPage,
+          limit,
+          targetSearch.trim(),
+          targetStatus
+        );
+
+        setVendors(data.vendors || []);
+        setTotalPages(data.pages || 1);
+        setTotalVendors(data.total || 0);
+      } catch (error) {
+        console.error("Error loading vendors:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [limit, page, search, statusFilter]
+  );
+
+  // Load when page or statusFilter changes
   useEffect(() => {
-    loadVendors();
-  }, [page,statusFilter]);
+    loadVendors(page, search, statusFilter);
+  }, [page, statusFilter]);
 
-  const loadVendors = async () => {
-  try {
-    setLoading(true);
+  // Live auto-search with debounce as user types
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
 
-    const data = await getAllVendors(
-      page,
-  limit,
-  search,
-  statusFilter
-);
+    const timer = setTimeout(() => {
+      setPage(1);
+      loadVendors(1, search, statusFilter);
+    }, 350);
 
-    setVendors(data.vendors || []);
-    setTotalPages(data.pages || 1);
-setTotalVendors(data.total || 0);
-  } catch (error) {
-    console.error("Error loading vendors:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    setPage(1);
+    loadVendors(1, search, statusFilter);
+  };
+
+  const handleClearSearch = () => {
+    setSearch("");
+    setPage(1);
+    loadVendors(1, "", statusFilter);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   const handleView = (vendor) => {
     setSelectedVendor(vendor);
@@ -123,50 +165,58 @@ setTotalVendors(data.total || 0);
 
         </div>
 
-        {/* Search */}
-        <div className="flex w-full gap-2 md:w-[550px]">
+        {/* Search & Filter */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex w-full gap-2 md:w-[550px]"
+          >
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-  <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search vendors..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border py-3 pl-10 pr-10 focus:border-blue-500 focus:outline-none"
+              />
 
-    <Search
-      size={18}
-      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-    />
+              {search && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
 
-    <input
-      type="text"
-      placeholder="Search vendors..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          loadVendors();
-        }
-      }}
-      className="w-full rounded-lg border py-3 pl-10 pr-4 focus:border-blue-500 focus:outline-none"
-    />
+            <button
+              type="submit"
+              className="rounded-lg bg-blue-600 px-5 text-white hover:bg-blue-700 transition cursor-pointer"
+            >
+              Search
+            </button>
+          </form>
 
-  </div>
-
-  <button
-    onClick={loadVendors}
-    className="rounded-lg bg-blue-600 px-5 text-white hover:bg-blue-700"
-  >
-    Search
-  </button>
-
-</div>
-<select
-  value={statusFilter}
-  onChange={(e) => setStatusFilter(e.target.value)}
-  className="rounded-lg border px-4 py-3 focus:border-blue-500 focus:outline-none"
->
-  <option value="">All Status</option>
-  <option value="Active">Active</option>
-  <option value="Inactive">Inactive</option>
-  <option value="Pending">Pending</option>
-  <option value="Blacklisted">Blacklisted</option>
-</select>
+          <select
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+            className="rounded-lg border px-4 py-3 focus:border-blue-500 focus:outline-none bg-white"
+          >
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Pending">Pending</option>
+            <option value="Blacklisted">Blacklisted</option>
+          </select>
+        </div>
         
 
         {/* Dashboard */}

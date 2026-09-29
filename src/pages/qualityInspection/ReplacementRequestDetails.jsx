@@ -347,10 +347,7 @@ export default function ReplacementRequestDetails() {
   // =======================================================
 
   const handleBack = () => {
-
-    navigate(
-      "/quality-inspections/replacement-requests"
-    );
+    navigate("/quality-inspection/replacements");
   };
 
 

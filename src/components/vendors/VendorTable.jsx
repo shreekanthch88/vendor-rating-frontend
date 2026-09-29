@@ -1,4 +1,4 @@
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, Star } from "lucide-react";
 
 const VendorTable = ({
   vendors = [],
@@ -38,24 +38,73 @@ const VendorTable = ({
         </thead>
 
         <tbody>
-          {vendors.map((vendor) => (
-            <tr
-              key={vendor._id}
-              className="border-t hover:bg-gray-50"
-            >
-              <td className="px-4 py-3">{vendor.vendorCode}</td>
+          {vendors.map((vendor) => {
+            const ratingValue =
+              vendor.overallRating != null
+                ? vendor.overallRating
+                : vendor.performance?.overallRating != null &&
+                  vendor.performance.overallRating > 0
+                ? Number((vendor.performance.overallRating / 20).toFixed(1))
+                : null;
 
-              <td className="px-4 py-3 font-medium">
-                {vendor.vendorName}
-              </td>
+            const scoreValue =
+              vendor.overallScore != null
+                ? vendor.overallScore
+                : vendor.performance?.overallRating != null &&
+                  vendor.performance.overallRating > 0
+                ? vendor.performance.overallRating
+                : null;
 
-              <td className="px-4 py-3">
-                {vendor.vendorCategory}
-              </td>
+            const categoryValue =
+              vendor.ratingCategory ||
+              vendor.performance?.ratingCategory ||
+              null;
 
-              <td className="px-4 py-3">
-                {vendor.overallRating ?? 0}
-              </td>
+            return (
+              <tr
+                key={vendor._id}
+                className="border-t hover:bg-gray-50"
+              >
+                <td className="px-4 py-3">{vendor.vendorCode}</td>
+
+                <td className="px-4 py-3 font-medium">
+                  {vendor.vendorName}
+                </td>
+
+                <td className="px-4 py-3">
+                  {vendor.vendorCategory}
+                </td>
+
+                <td className="px-4 py-3">
+                  {ratingValue != null ? (
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <Star
+                          size={15}
+                          className="fill-amber-400 text-amber-400 shrink-0"
+                        />
+                        <span className="font-semibold text-gray-800">
+                          {Number(ratingValue).toFixed(1)}
+                        </span>
+                        <span className="text-xs text-gray-500">/ 5</span>
+                        {scoreValue != null && (
+                          <span className="text-xs text-gray-400">
+                            ({Number(scoreValue).toFixed(1)}%)
+                          </span>
+                        )}
+                      </div>
+                      {categoryValue && (
+                        <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded w-fit">
+                          {categoryValue}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center text-xs text-gray-400 font-medium">
+                      Not Rated
+                    </span>
+                  )}
+                </td>
 
               <td className="px-4 py-3">
                 <span
@@ -96,8 +145,9 @@ const VendorTable = ({
                 </div>
               </td>
             </tr>
-          ))}
-        </tbody>
+          );
+        })}
+      </tbody>
       </table>
     </div>
   );

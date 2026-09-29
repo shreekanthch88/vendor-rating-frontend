@@ -610,7 +610,26 @@ function App() {
     }
   />
 
+  <Route
+    path="replacement-requests"
+    element={<Navigate to="/quality-inspection/replacements" replace />}
+  />
+
 </Route>
+
+{/* Redirects for legacy or plural routes */}
+<Route
+  path="/quality-inspections/replacement-requests"
+  element={<Navigate to="/quality-inspection/replacements" replace />}
+/>
+<Route
+  path="/quality-inspections/replacement-requests/:id"
+  element={<Navigate to="/quality-inspection/replacements" replace />}
+/>
+<Route
+  path="/quality-inspections"
+  element={<Navigate to="/quality-inspection/inspections" replace />}
+/>
 
 
 
