@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Eye,
   Pencil,
   Trash2,
   Printer,
-  FileText,
   MoreVertical,
   CheckCircle,
   XCircle,
   Send,
   X,
+  Ban,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const PurchaseOrderTable = ({
@@ -25,11 +27,53 @@ const PurchaseOrderTable = ({
   onSubmitSelected,
   onReject,
   onSendToVendor,
+  onCancel,
 }) => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isApproving, setIsApproving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
+
+  const tableContainerRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (tableContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+      setCanScrollLeft(scrollLeft > 2);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const timer = setTimeout(checkScroll, 150);
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [purchaseOrders, loading]);
+
+  const handleScroll = (direction) => {
+    if (tableContainerRef.current) {
+      const scrollAmount = 350;
+      tableContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const scrollToRightEnd = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTo({
+        left: tableContainerRef.current.scrollWidth,
+        behavior: "smooth",
+      });
+    }
+  };
 
   // Close 3-dots dropdown when clicking outside
   useEffect(() => {
@@ -241,7 +285,56 @@ const PurchaseOrderTable = ({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Table Navigation & Horizontal Scroll Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/80 px-5 py-2.5">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+          <span>{purchaseOrders.length} Order{purchaseOrders.length !== 1 ? "s" : ""} listed</span>
+          {selectedIds.length > 0 && (
+            <span className="font-semibold text-blue-600">
+              ({selectedIds.length} selected)
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400 hidden sm:inline">Table Scroll:</span>
+          <button
+            type="button"
+            onClick={() => handleScroll("left")}
+            disabled={!canScrollLeft}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed shadow-xs transition"
+            title="Scroll table left"
+          >
+            <ChevronLeft size={14} />
+            <span className="hidden sm:inline">Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScroll("right")}
+            disabled={!canScrollRight}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed shadow-xs transition"
+            title="Scroll table right"
+          >
+            <span className="hidden sm:inline">Right</span>
+            <ChevronRight size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={scrollToRightEnd}
+            className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition shadow-xs"
+            title="Scroll all the way to Actions & Delete buttons"
+          >
+            <Trash2 size={13} className="text-red-500" />
+            <span>Scroll to Actions / Delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="overflow-x-auto"
+        ref={tableContainerRef}
+        onScroll={checkScroll}
+      >
 
         <table className="min-w-full">
                   {/* ==========================================
@@ -332,7 +425,7 @@ const PurchaseOrderTable = ({
 
               {/* Actions */}
 
-              <th className="px-4 py-4 text-center text-sm font-semibold text-slate-700">
+              <th className="sticky right-0 z-20 bg-slate-100 px-4 py-4 text-center text-sm font-semibold text-slate-700 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
 
                 Actions
 
@@ -522,7 +615,7 @@ const PurchaseOrderTable = ({
                 </td>
 
                 {/* Actions */}
-                <td className="px-4 py-3 text-center">
+                <td className="sticky right-0 z-10 bg-white group-hover:bg-slate-50 px-4 py-3 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
                   <div className="po-action-menu-container relative inline-flex items-center justify-center gap-1.5">
                     {/* View */}
                     <button
@@ -610,17 +703,19 @@ const PurchaseOrderTable = ({
                             Print Order
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveMenuId(null);
-                              onExport(po);
-                            }}
-                            className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <FileText size={14} className="text-violet-600" />
-                            Export PDF
-                          </button>
+                          {po.status !== "Delivered" && po.status !== "Cancelled" && onCancel && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                onCancel(po);
+                              }}
+                              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-amber-600 hover:bg-amber-50 transition"
+                            >
+                              <Ban size={14} />
+                              Cancel Order
+                            </button>
+                          )}
 
                           {po.status === "Submitted" && onReject && (
                             <button

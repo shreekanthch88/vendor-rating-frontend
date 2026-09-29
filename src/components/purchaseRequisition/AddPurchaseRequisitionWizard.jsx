@@ -55,11 +55,51 @@ const [materialItems, setMaterialItems] = useState(
   };
 
   // Generate PR Number when modal opens
- useEffect(() => {
-  if (isOpen) {
-    generatePRNumber();
-  }
-}, [isOpen]);
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          prNumber: initialData.prNumber || "",
+          department: initialData.department || "",
+          requiredDate: initialData.requiredDate
+            ? String(initialData.requiredDate).slice(0, 10)
+            : "",
+          priority: initialData.priority || "Medium",
+          purpose: initialData.purpose || "",
+          remarks: initialData.remarks || "",
+        });
+
+        if (initialData.items && initialData.items.length > 0) {
+          setMaterialItems(
+            initialData.items.map((it) => ({
+              material: it.material?._id || it.material || "",
+              materialCode: it.material?.materialCode || it.materialCode || "",
+              materialName: it.material?.materialName || it.materialName || "",
+              unitOfMeasure:
+                it.material?.unitOfMeasure || it.unitOfMeasure || "",
+              quantity: it.quantity || 1,
+              estimatedCost: it.estimatedCost || 0,
+              remarks: it.remarks || "",
+            }))
+          );
+        } else {
+          setMaterialItems([
+            {
+              material: "",
+              materialCode: "",
+              materialName: "",
+              unitOfMeasure: "",
+              quantity: 1,
+              estimatedCost: 0,
+              remarks: "",
+            },
+          ]);
+        }
+      } else {
+        generatePRNumber();
+      }
+    }
+  }, [isOpen, initialData]);
 
   // ==========================================
   // Step Validation
@@ -128,9 +168,13 @@ const [materialItems, setMaterialItems] = useState(
   // ==========================================
   const handleSaveDraft = async () => {
     try {
+      const validItems = materialItems.filter(
+        (item) => item.material && String(item.material).trim() !== ""
+      );
+
       const payload = {
         ...formData,
-        items: materialItems,
+        items: validItems,
         status: "Draft",
       };
 
@@ -156,9 +200,13 @@ const [materialItems, setMaterialItems] = useState(
     try {
       setSaving(true);
 
+      const validItems = materialItems.filter(
+        (item) => item.material && String(item.material).trim() !== ""
+      );
+
       const payload = {
         ...formData,
-        items: materialItems,
+        items: validItems,
         status: "Submitted",
       };
 

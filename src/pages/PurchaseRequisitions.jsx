@@ -39,6 +39,7 @@ const PurchaseRequisitions = () => {
   const [limit, setLimit] = useState(10);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [department, setDepartment] = useState("");
 
@@ -47,6 +48,8 @@ const PurchaseRequisitions = () => {
   const [priority, setPriority] = useState("");
 
   const [selectedRequisition, setSelectedRequisition] = useState(null);
+
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [showAdd, setShowAdd] = useState(false);
 
@@ -59,157 +62,168 @@ const PurchaseRequisitions = () => {
   const [showReject, setShowReject] = useState(false);
 
   const loadPurchaseRequisitions = async () => {
-
     try {
-
       setLoading(true);
 
-      const response =
-        await getAllPurchaseRequisitions(
-          page,
-          limit,
-          search,
-          status,
-          department,
-          priority
-        );
+      const response = await getAllPurchaseRequisitions({
+        page,
+        limit,
+        search: debouncedSearch,
+        status,
+        department,
+        priority,
+      });
 
-      setRequisitions(
-        response.requisitions || []
-      );
+      setRequisitions(response.requisitions || []);
 
       setPages(response.pages || 1);
 
       setTotal(response.total || 0);
-
     } catch (error) {
-
       console.error(error);
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
 
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     loadPurchaseRequisitions();
-
   }, [
     page,
     limit,
-    search,
+    debouncedSearch,
     department,
     status,
     priority,
   ]);
 
-  const handleSearch = () => {
-
+  const handleCardStatusSelect = (cardStatus) => {
+    setStatus((prev) => (prev === cardStatus ? "" : cardStatus));
     setPage(1);
+  };
 
-    loadPurchaseRequisitions();
-
+  const handleSearch = () => {
+    setDebouncedSearch(search);
+    setPage(1);
   };
 
   const handleReset = () => {
-
     setSearch("");
-
+    setDebouncedSearch("");
     setDepartment("");
-
     setStatus("");
-
     setPriority("");
-
     setPage(1);
-
   };
 
   const handleRefresh = () => {
-
+    setRefreshTrigger((prev) => prev + 1);
     loadPurchaseRequisitions();
-
   };
 
   const handleCreate = async (payload) => {
-
     await createPurchaseRequisition(payload);
-
     setShowAdd(false);
-
+    setRefreshTrigger((prev) => prev + 1);
     loadPurchaseRequisitions();
-
   };
 
   const handleUpdate = async (payload) => {
-
     await updatePurchaseRequisition(
       selectedRequisition._id,
       payload
     );
-
     setShowEdit(false);
-
+    setRefreshTrigger((prev) => prev + 1);
     loadPurchaseRequisitions();
-
   };
 
   const handleDelete = async (id) => {
-
     await deletePurchaseRequisition(id);
-
     setShowDelete(false);
-
+    setRefreshTrigger((prev) => prev + 1);
     loadPurchaseRequisitions();
-
   };
 
   const handleSubmit = async (requisition) => {
-
-    await submitPurchaseRequisition(
-      requisition._id
+    const confirmSubmit = window.confirm(
+      `Are you sure you want to submit Purchase Requisition ${requisition.prNumber}?`
     );
+    if (!confirmSubmit) return;
 
-    loadPurchaseRequisitions();
-
+    try {
+      await submitPurchaseRequisition(
+        requisition._id
+      );
+      setRefreshTrigger((prev) => prev + 1);
+      loadPurchaseRequisitions();
+      alert("Purchase Requisition Submitted Successfully.");
+    } catch (error) {
+      console.error(error);
+      alert(
+        error?.response?.data?.message ||
+          "Failed to submit Purchase Requisition."
+      );
+    }
   };
 
   const handleApprove = async (requisition) => {
-
-    await approvePurchaseRequisition(
-      requisition._id
+    const confirmApprove = window.confirm(
+      `Are you sure you want to approve Purchase Requisition ${requisition.prNumber}?`
     );
+    if (!confirmApprove) return;
 
-    loadPurchaseRequisitions();
-
+    try {
+      await approvePurchaseRequisition(
+        requisition._id
+      );
+      setRefreshTrigger((prev) => prev + 1);
+      loadPurchaseRequisitions();
+      alert("Purchase Requisition Approved Successfully.");
+    } catch (error) {
+      console.error(error);
+      alert(
+        error?.response?.data?.message ||
+          "Failed to approve Purchase Requisition."
+      );
+    }
   };
 
-  const handleReject = async (requisition) => {
-  try {
-    const reason = window.prompt(
-      "Enter rejection reason:"
-    );
+  const handleReject = async (requisition, reason) => {
+    try {
+      if (!reason || !reason.trim()) {
+        alert("Rejection reason is required.");
+        return;
+      }
 
-    if (!reason) return;
+      await rejectPurchaseRequisition(
+        requisition._id,
+        reason.trim()
+      );
 
-    await rejectPurchaseRequisition(
-      requisition._id,
-      reason
-    );
+      setShowReject(false);
+      setSelectedRequisition(null);
+      setRefreshTrigger((prev) => prev + 1);
+      loadPurchaseRequisitions();
 
-    loadPurchaseRequisitions();
-
-    alert("Purchase Requisition Rejected Successfully.");
-
-  } catch (error) {
-    console.error(error);
-    alert("Failed to reject Purchase Requisition.");
-  }
-};
+      alert("Purchase Requisition Rejected Successfully.");
+    } catch (error) {
+      console.error(error);
+      alert(
+        error?.response?.data?.message ||
+          "Failed to reject Purchase Requisition."
+      );
+    }
+  };
 
   return (
 
@@ -256,7 +270,11 @@ const PurchaseRequisitions = () => {
 
         {/* Dashboard */}
 
-        <PurchaseRequisitionDashboardCards />
+        <PurchaseRequisitionDashboardCards
+          selectedStatus={status}
+          onSelectStatus={handleCardStatusSelect}
+          refreshTrigger={refreshTrigger}
+        />
 
         {/* Filters */}
 
@@ -264,11 +282,20 @@ const PurchaseRequisitions = () => {
           search={search}
           setSearch={setSearch}
           department={department}
-          setDepartment={setDepartment}
+          setDepartment={(dept) => {
+            setDepartment(dept);
+            setPage(1);
+          }}
           status={status}
-          setStatus={setStatus}
+          setStatus={(st) => {
+            setStatus(st);
+            setPage(1);
+          }}
           priority={priority}
-          setPriority={setPriority}
+          setPriority={(prio) => {
+            setPriority(prio);
+            setPage(1);
+          }}
           onSearch={handleSearch}
           onReset={handleReset}
         />

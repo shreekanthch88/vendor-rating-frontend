@@ -135,6 +135,11 @@ const validateStep = () => {
           "Delivery Address is required.";
       }
 
+      if (formData.contactNumber && !/^\d{10}$/.test(formData.contactNumber)) {
+        newErrors.contactNumber =
+          "Contact number must be exactly 10 digits.";
+      }
+
       break;
 
     default:

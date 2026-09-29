@@ -28,14 +28,34 @@ export const getPurchaseRequisitionDashboard = async () => {
  *   priority
  * }
  */
-export const getAllPurchaseRequisitions = async ({
-  page = 1,
-  limit = 10,
-  search = "",
-  status = "",
-  department = "",
-  priority = "",
-} = {}) => {
+export const getAllPurchaseRequisitions = async (...args) => {
+  let page = 1,
+    limit = 10,
+    search = "",
+    status = "",
+    department = "",
+    priority = "";
+
+  if (args.length === 1 && typeof args[0] === "object" && args[0] !== null) {
+    ({
+      page = 1,
+      limit = 10,
+      search = "",
+      status = "",
+      department = "",
+      priority = "",
+    } = args[0]);
+  } else if (args.length > 0) {
+    [
+      page = 1,
+      limit = 10,
+      search = "",
+      status = "",
+      department = "",
+      priority = "",
+    ] = args;
+  }
+
   const response = await api.get(
     "/purchase-requisitions",
     {

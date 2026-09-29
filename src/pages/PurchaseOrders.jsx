@@ -18,6 +18,7 @@ import {
   getAllPurchaseOrders,
   getPurchaseOrderById,
   deletePurchaseOrder,
+  cancelPurchaseOrder,
   submitPurchaseOrder,
   approvePurchaseOrder,
   rejectPurchaseOrder,
@@ -42,6 +43,7 @@ const PurchaseOrders = () => {
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
   const [vendor, setVendor] = useState("");
   const [priority, setPriority] = useState("");
@@ -52,6 +54,22 @@ const PurchaseOrders = () => {
   const [total, setTotal] = useState(0);
 
   const [dashboard, setDashboard] = useState({});
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const triggerRefresh = () => setRefreshTrigger((prev) => prev + 1);
+
+  // Debounce search by 350ms to prevent laggy multi-endpoint spam
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  // Reset to page 1 when any filter or debounced search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, status, vendor, priority]);
 
   const [charts, setCharts] = useState({
     trendData: [],
@@ -90,7 +108,7 @@ const [fulfillmentLoading, setFulfillmentLoading] =
         await getAllPurchaseOrders(
           page,
           limit,
-          search,
+          debouncedSearch,
           status,
           vendor,
           priority
@@ -187,36 +205,30 @@ const [fulfillmentLoading, setFulfillmentLoading] =
    */
 
   useEffect(() => {
-
     loadPurchaseOrders();
-
-    loadDashboard();
-
-    loadCharts();
-
   }, [
     page,
     limit,
-    search,
+    debouncedSearch,
     status,
     vendor,
     priority,
+    refreshTrigger,
   ]);
 
-    /**
+  useEffect(() => {
+    loadDashboard();
+    loadCharts();
+  }, [refreshTrigger]);
+
+  /**
    * ==========================================
    * Refresh All Data
    * ==========================================
    */
-
   const refreshPage = async () => {
-
+    triggerRefresh();
     await loadPurchaseOrders();
-
-    await loadDashboard();
-
-    await loadCharts();
-
   };
 
   /**
@@ -709,7 +721,39 @@ const [fulfillmentLoading, setFulfillmentLoading] =
       }
 
     };
-      return (
+
+  /**
+   * ==========================================
+   * Cancel Purchase Order
+   * ==========================================
+   */
+  const handleCancel = async (purchaseOrder) => {
+    if (!purchaseOrder) return;
+
+    const confirmCancel = window.confirm(
+      `Are you sure you want to cancel Purchase Order ${purchaseOrder.poNumber || ""}?`
+    );
+    if (!confirmCancel) return;
+
+    const reason = window.prompt("Enter cancellation reason (optional):") ?? "";
+
+    try {
+      setLoading(true);
+      await cancelPurchaseOrder(purchaseOrder._id, reason);
+      alert("Purchase Order cancelled successfully.");
+      await refreshPage();
+    } catch (error) {
+      console.error("Cancel Purchase Order Error:", error);
+      alert(
+        error?.response?.data?.message ||
+        "Failed to cancel Purchase Order."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
 
     <Layout>
 

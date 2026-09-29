@@ -241,25 +241,39 @@ const DeliveryInformationStep = ({
 
               type="text"
 
-              placeholder="Mobile Number"
+              inputMode="numeric"
 
-              value={formData.contactNumber}
+              maxLength={10}
 
-              onChange={(e) =>
+              placeholder="10-digit Mobile Number"
 
-                updateField(
+              value={formData.contactNumber || ""}
 
-                  "contactNumber",
+              onChange={(e) => {
 
-                  e.target.value
+                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
 
-                )
+                updateField("contactNumber", val);
 
-              }
+              }}
 
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+              className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-500 ${
+                errors.contactNumber
+                  ? "border-red-500 bg-red-50/50"
+                  : "border-slate-300"
+              }`}
 
             />
+
+            {errors.contactNumber && (
+
+              <p className="mt-1 text-xs text-red-600">
+
+                {errors.contactNumber}
+
+              </p>
+
+            )}
 
           </div>
 

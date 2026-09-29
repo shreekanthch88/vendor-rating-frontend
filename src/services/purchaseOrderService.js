@@ -16,22 +16,39 @@ export const getPurchaseOrderDashboard = async () => {
  * ==========================================
  */
 export const getAllPurchaseOrders = async (
-  page = 1,
+  pageOrParams = 1,
   limit = 10,
   search = "",
   status = "",
   vendor = "",
   priority = ""
 ) => {
-  const response = await api.get("/purchase-orders", {
-    params: {
-      page,
+  let params = {};
+  if (typeof pageOrParams === "object" && pageOrParams !== null) {
+    params = pageOrParams;
+  } else {
+    params = {
+      page: pageOrParams,
       limit,
       search,
       status,
       vendor,
       priority,
-    },
+    };
+  }
+
+  const response = await api.get("/purchase-orders", { params });
+  return response.data;
+};
+
+/**
+ * ==========================================
+ * Cancel Purchase Order
+ * ==========================================
+ */
+export const cancelPurchaseOrder = async (id, reason = "") => {
+  const response = await api.patch(`/purchase-orders/${id}/cancel`, {
+    reason,
   });
 
   return response.data;

@@ -129,7 +129,14 @@ const BasicInformationStep = ({
           unitOfMeasure:
             item.unitOfMeasure || "",
 
-          unitPrice: 0,
+          unitPrice:
+            Number(
+              item.unitPrice ||
+              item.estimatedCost ||
+              item.estimatedUnitPrice ||
+              item.material?.standardCost ||
+              0
+            ),
 
           taxPercentage: 0,
 
