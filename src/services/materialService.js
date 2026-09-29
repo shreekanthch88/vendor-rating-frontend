@@ -8,18 +8,33 @@ export const getMaterialDashboard = async () => {
 
 // Get All Materials
 export const getAllMaterials = async (
-  page = 1,
-  limit = 100,
+  pageOrOptions = 1,
+  limit = 10,
   search = "",
-  status = "Active"
+  status = ""
 ) => {
+  const params = {
+    page: 1,
+    limit: 10,
+    search: "",
+    status: "",
+  };
+
+  if (typeof pageOrOptions === "object" && pageOrOptions !== null) {
+    params.page = pageOrOptions.page || 1;
+    params.limit = pageOrOptions.limit || 10;
+    params.search = pageOrOptions.search || "";
+    params.status = pageOrOptions.status ?? "";
+    if (pageOrOptions.category) params.category = pageOrOptions.category;
+  } else {
+    params.page = pageOrOptions || 1;
+    params.limit = limit || 10;
+    params.search = search || "";
+    params.status = status || "";
+  }
+
   const response = await api.get("/materials", {
-    params: {
-      page,
-      limit,
-      search,
-      status,
-    },
+    params,
   });
 
   return response.data;

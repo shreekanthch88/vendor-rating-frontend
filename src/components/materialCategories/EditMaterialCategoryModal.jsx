@@ -69,7 +69,8 @@ const EditMaterialCategoryModal = ({
 
       toast.success("Category updated successfully.");
 
-      onSuccess();
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
     } catch (error) {
       toast.error(
         error.response?.data?.message ||

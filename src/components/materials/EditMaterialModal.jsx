@@ -73,8 +73,16 @@ const EditMaterialModal = ({
       return toast.warning("Category is required.");
     }
 
-    if (!formData.standardCost) {
+    if (formData.standardCost === "" || formData.standardCost === null || formData.standardCost === undefined) {
       return toast.warning("Standard Cost is required.");
+    }
+
+    if (isNaN(Number(formData.standardCost))) {
+      return toast.warning("Standard Cost must be a valid number.");
+    }
+
+    if (Number(formData.standardCost) < 0) {
+      return toast.warning("Standard Cost cannot be a negative number.");
     }
 
     try {
@@ -89,7 +97,8 @@ const EditMaterialModal = ({
 
       toast.success("Material updated successfully.");
 
-      onSuccess();
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
@@ -184,9 +193,17 @@ const EditMaterialModal = ({
               <input
                 type="number"
                 name="standardCost"
+                min="0"
+                step="0.01"
                 value={formData.standardCost}
                 onChange={handleChange}
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e" || e.key === "E") {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full rounded-lg border p-3"
+                placeholder="0.00"
               />
             </div>
 

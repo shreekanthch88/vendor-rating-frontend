@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Layout from "../layout/Layout";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 
 import MaterialCategoryDashboardCards from "../components/materialCategories/MaterialCategoryDashboardCards";
 import MaterialCategoryTable from "../components/materialCategories/MaterialCategoryTable";
@@ -18,6 +18,7 @@ import {
 
 const MaterialCategories = () => {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   const [page, setPage] = useState(1);
@@ -38,9 +39,22 @@ const MaterialCategories = () => {
 
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset to page 1 on search or filter change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
+
   useEffect(() => {
     loadCategories();
-  }, [page, statusFilter]);
+  }, [page, debouncedSearch, statusFilter]);
 
   const loadCategories = async () => {
     try {
@@ -49,7 +63,7 @@ const MaterialCategories = () => {
       const data = await getAllCategories(
         page,
         limit,
-        search,
+        debouncedSearch.trim(),
         statusFilter
       );
 
@@ -61,6 +75,18 @@ const MaterialCategories = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    setPage(1);
+    setDebouncedSearch(search);
+  };
+
+  const handleClearSearch = () => {
+    setSearch("");
+    setDebouncedSearch("");
+    setPage(1);
   };
 
   const handleSaveCategory = async (categoryData) => {
@@ -109,36 +135,42 @@ const MaterialCategories = () => {
         </div>
 
         {/* Search & Filter */}
-        <div className="mt-6 flex flex-col gap-4 md:flex-row">
+        <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center">
 
-          <div className="relative w-full md:w-[500px]">
+          <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2 md:max-w-[550px]">
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border py-3 pl-10 pr-10 focus:border-blue-500 focus:outline-none"
+              />
 
-            <input
-              type="text"
-              placeholder="Search categories..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  loadCategories();
-                }
-              }}
-              className="w-full rounded-lg border py-3 pl-10 pr-4 focus:border-blue-500 focus:outline-none"
-            />
+              {search && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
 
-          </div>
-
-          <button
-            onClick={loadCategories}
-            className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-          >
-            Search
-          </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700 font-medium"
+            >
+              Search
+            </button>
+          </form>
 
           <select
             value={statusFilter}
@@ -239,6 +271,8 @@ const MaterialCategories = () => {
           setSelectedCategory(null);
         }}
         onSuccess={() => {
+          setShowEditModal(false);
+          setSelectedCategory(null);
           setRefreshKey((prev) => prev + 1);
           loadCategories();
         }}
@@ -252,6 +286,8 @@ const MaterialCategories = () => {
           setSelectedCategory(null);
         }}
         onSuccess={() => {
+          setShowDeleteModal(false);
+          setSelectedCategory(null);
           setRefreshKey((prev) => prev + 1);
           loadCategories();
         }}

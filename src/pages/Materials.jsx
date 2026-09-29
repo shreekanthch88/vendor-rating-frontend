@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Layout from "../layout/Layout";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 
 import MaterialDashboardCards from "../components/materials/MaterialDashboard";
 import MaterialTable from "../components/materials/MaterialTable";
@@ -17,6 +17,7 @@ const Materials = () => {
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
 
   const [page, setPage] = useState(1);
@@ -31,13 +32,27 @@ const Materials = () => {
 
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset to page 1 on search or filter change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, status]);
+
   const loadMaterials = async () => {
     try {
       setLoading(true);
 
       const response = await getAllMaterials({
         page,
-        search,
+        limit: 10,
+        search: debouncedSearch.trim(),
         status,
       });
 
@@ -52,7 +67,7 @@ const Materials = () => {
 
   useEffect(() => {
     loadMaterials();
-  }, [page, search, status]);
+  }, [page, debouncedSearch, status]);
 
   return (
     <Layout>
@@ -101,8 +116,23 @@ const Materials = () => {
                 placeholder="Search Material..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border py-2 pl-10 pr-3"
+                className="w-full rounded-lg border py-2 pl-10 pr-10 focus:border-blue-500 focus:outline-none"
               />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setDebouncedSearch("");
+                    setPage(1);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
 
             </div>
 
@@ -184,10 +214,14 @@ const Materials = () => {
 
       <EditMaterialModal
         isOpen={showEdit}
-        onClose={() => setShowEdit(false)}
+        onClose={() => {
+          setShowEdit(false);
+          setSelectedMaterial(null);
+        }}
         material={selectedMaterial}
         onSuccess={() => {
           setShowEdit(false);
+          setSelectedMaterial(null);
           setRefreshKey((prev) => prev + 1);
           loadMaterials();
         }}
@@ -195,10 +229,14 @@ const Materials = () => {
 
       <DeleteMaterialModal
         isOpen={showDelete}
-        onClose={() => setShowDelete(false)}
+        onClose={() => {
+          setShowDelete(false);
+          setSelectedMaterial(null);
+        }}
         material={selectedMaterial}
         onSuccess={() => {
           setShowDelete(false);
+          setSelectedMaterial(null);
           setRefreshKey((prev) => prev + 1);
           loadMaterials();
         }}

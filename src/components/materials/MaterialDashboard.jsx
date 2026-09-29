@@ -21,29 +21,36 @@ const MaterialDashboard = ({ refreshTrigger = 0 }) => {
   const loadDashboard = async () => {
     try {
       const response = await getMaterialDashboard();
+      const data = response?.data || response;
 
-      setDashboard(response.data);
+      if (data) {
+        setDashboard({
+          totalMaterials: data.totalMaterials ?? 0,
+          activeMaterials: data.activeMaterials ?? 0,
+          inactiveMaterials: data.inactiveMaterials ?? 0,
+        });
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Dashboard error:", error);
     }
   };
 
   const cards = [
     {
       title: "Total Materials",
-      value: dashboard.totalMaterials,
+      value: dashboard?.totalMaterials ?? 0,
       icon: Boxes,
       color: "bg-blue-500",
     },
     {
       title: "Active Materials",
-      value: dashboard.activeMaterials,
+      value: dashboard?.activeMaterials ?? 0,
       icon: CheckCircle,
       color: "bg-green-500",
     },
     {
       title: "Inactive Materials",
-      value: dashboard.inactiveMaterials,
+      value: dashboard?.inactiveMaterials ?? 0,
       icon: XCircle,
       color: "bg-red-500",
     },
