@@ -9,6 +9,8 @@ import {
 // ADMIN PAGES
 import PortalGateway from "./pages/PortalGateway";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -197,6 +199,24 @@ function App() {
           element={
             <PublicRoute>
               <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPassword />
             </PublicRoute>
           }
         />
@@ -615,9 +635,25 @@ function App() {
     element={<Navigate to="/quality-inspection/replacements" replace />}
   />
 
+  {/* Vendor Quality */}
+  <Route
+    path="vendor-quality"
+    element={<Navigate to="/ratings" replace />}
+  />
+
+  {/* Quality Inspection Settings */}
+  <Route
+    path="settings"
+    element={<Navigate to="/settings" replace />}
+  />
+
 </Route>
 
 {/* Redirects for legacy or plural routes */}
+<Route
+  path="/quality-inspections/vendor-quality"
+  element={<Navigate to="/ratings" replace />}
+/>
 <Route
   path="/quality-inspections/replacement-requests"
   element={<Navigate to="/quality-inspection/replacements" replace />}

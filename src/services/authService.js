@@ -58,3 +58,35 @@ export const changePassword = async ({ currentPassword, newPassword }) => {
 
   return response.data;
 };
+
+/**
+ * ==========================================
+ * Request Password Reset OTP
+ * POST /api/auth/forgot-password
+ * ==========================================
+ */
+export const requestPasswordReset = async (email, portal = null) => {
+  const response = await api.post("/auth/forgot-password", {
+    email,
+    portal,
+  });
+
+  return response.data;
+};
+
+/**
+ * ==========================================
+ * Reset Password With OTP
+ * POST /api/auth/reset-password
+ * ==========================================
+ */
+export const resetPassword = async ({ email, otp, newPassword, portal = null }) => {
+  const response = await api.post("/auth/reset-password", {
+    email,
+    otp,
+    newPassword,
+    portal,
+  });
+
+  return response.data;
+};

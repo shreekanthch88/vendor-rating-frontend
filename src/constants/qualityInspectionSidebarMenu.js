@@ -4,7 +4,10 @@ import {
   PlusCircle,
   RefreshCcw,
   RotateCcw,
+  BarChart3,
   TrendingUp,
+  Star,
+  Settings,
 } from "lucide-react";
 
 /**
@@ -56,6 +59,18 @@ export const qualityInspectionSidebarMenu = [
     title: "Analytics",
     icon: TrendingUp,
     path: "/quality-inspection/analytics",
+  },
+
+  {
+    title: "Vendor Quality",
+    icon: Star,
+    path: "/quality-inspection/vendor-quality",
+  },
+
+  {
+    title: "Settings",
+    icon: Settings,
+    path: "/quality-inspection/settings",
   },
 ];
 

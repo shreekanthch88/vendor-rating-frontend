@@ -27,30 +27,30 @@ const DeletePurchaseRequisitionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
 
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto">
 
         {/* Header */}
 
-        <div className="flex items-center justify-between border-b px-6 py-5">
+        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
 
           <div className="flex items-center gap-3">
 
-            <div className="rounded-full bg-red-100 p-3">
+            <div className="rounded-full bg-red-100 p-2.5">
               <AlertTriangle
-                size={26}
+                size={22}
                 className="text-red-600"
               />
             </div>
 
             <div>
 
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="text-lg font-bold text-gray-800">
                 Delete Purchase Requisition
               </h2>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 This action cannot be undone.
               </p>
 
@@ -70,7 +70,7 @@ const DeletePurchaseRequisitionModal = ({
 
         {/* Body */}
 
-        <div className="space-y-5 p-6">
+        <div className="space-y-4 p-6 overflow-y-auto">
 
           <div className="rounded-lg border border-red-200 bg-red-50 p-5">
 
@@ -166,7 +166,7 @@ const DeletePurchaseRequisitionModal = ({
 
         {/* Footer */}
 
-        <div className="flex justify-end gap-3 border-t bg-gray-50 px-6 py-5">
+        <div className="flex justify-end gap-3 border-t bg-gray-50 px-6 py-4 shrink-0">
 
           <button
             onClick={onClose}

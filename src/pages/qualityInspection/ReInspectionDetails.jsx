@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { History } from "lucide-react";
 
 import {
   ArrowLeft,
@@ -7,7 +8,6 @@ import {
   Check,
   CheckCircle2,
   ClipboardCheck,
-  History,
   Loader2,
   RefreshCw,
   Save,
@@ -1605,171 +1605,97 @@ const ReInspectionDetails = () => {
       </div>
 
 
-     {/* =================================================
-    ACTION BAR
-    ================================================= */}
-
-<div className="sticky bottom-0 z-20 rounded-xl border border-slate-200 bg-white/95 px-4 py-4 shadow-lg backdrop-blur">
-
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-    <div>
-
-      <p className="text-xs text-slate-500">
-        Overall Result
-      </p>
-
-      <p className="text-sm font-bold text-slate-900">
-        {overallResult}
-      </p>
-
-    </div>
-
-
-    <div className="flex flex-col gap-2 sm:flex-row">
-
-      {/* BACK */}
-
-      <button
-        type="button"
-        onClick={() =>
-          navigate(
-            "/quality-inspection/re-inspections"
-          )
-        }
-        disabled={saving}
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-      >
-        <ArrowLeft size={16} />
-        Back
-      </button>
-
-
-      <button
-        type="button"
-        onClick={() =>
-          navigate(
-            `/quality-inspection/re-inspections/history/${reInspection.originalInspection?._id}`
-          )
-        }
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-      >
-        <History size={16} />
-        View History
-      </button>
-
-
       {/* =================================================
-          ACTIVE RI
-          ================================================= */}
+          ACTION BAR
+      ================================================= */}
 
-      {!isReadOnly && (
-        <>
+      <div className="sticky bottom-0 z-20 rounded-xl border border-slate-200 bg-white/95 px-4 py-4 shadow-lg backdrop-blur">
 
-          {/* SAVE DRAFT */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-          <button
-            type="button"
-            onClick={
-              handleSaveDraft
-            }
-            disabled={saving}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
+          <div>
 
-            {saving ? (
-              <Loader2
-                size={16}
-                className="animate-spin"
-              />
-            ) : (
-              <Save size={16} />
+            <p className="text-xs text-slate-500">
+              Overall Result
+            </p>
+
+            <p className="text-sm font-bold text-slate-900">
+              {overallResult}
+            </p>
+
+          </div>
+
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/quality-inspection/re-inspections"
+                )
+              }
+              disabled={saving}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+
+
+            {!isReadOnly && (
+              <button
+                type="button"
+                onClick={
+                  handleSaveDraft
+                }
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2
+                    size={16}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Save size={16} />
+                )}
+
+                Save Draft
+              </button>
             )}
 
-            Save Draft
 
-          </button>
+            <button
+              type="button"
+              onClick={
+                handleProceedToFinalDecision
+              }
+              disabled={saving}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
 
-
-          {/* FINAL DECISION */}
-
-          <button
-            type="button"
-            onClick={
-              handleProceedToFinalDecision
-            }
-            disabled={saving}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-
-            {saving ? (
-              <Loader2
-                size={16}
-                className="animate-spin"
-              />
-            ) : (
-              <>
-                Proceed to Final Decision
-
-                <ArrowRight
+              {saving ? (
+                <Loader2
                   size={16}
+                  className="animate-spin"
                 />
-              </>
-            )}
+              ) : (
+                <>
+                  Proceed to Final Decision
+                  <ArrowRight
+                    size={16}
+                  />
+                </>
+              )}
 
-          </button>
+            </button>
 
-        </>
-      )}
+          </div>
 
+        </div>
 
-      {/* =================================================
-          COMPLETED RI
-          ================================================= */}
-
-      {reInspection.status ===
-        "Completed" && (
-
-        <button
-          type="button"
-          onClick={() =>
-            navigate(
-              `/quality-inspection/re-inspections/${id}/final-decision`
-            )
-          }
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700"
-        >
-
-          <CheckCircle2
-            size={16}
-          />
-
-          View Final Decision
-
-        </button>
-
-      )}
-
-
-      {/* =================================================
-          CANCELLED RI
-          ================================================= */}
-
-      {reInspection.status ===
-        "Cancelled" && (
-
-        <span className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600">
-          Re-Inspection Cancelled
-        </span>
-
-      )}
-
-    </div>
-
-  </div>
-
-</div>
-
+      </div>
 
     </div>
   );

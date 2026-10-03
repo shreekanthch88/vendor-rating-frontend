@@ -608,16 +608,12 @@ const Login = () => {
                   <span className="text-xs text-slate-600 font-medium">Remember Me</span>
                 </label>
 
-                <a
-                  href="#forgot"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert("Please contact your system administrator to reset your password.");
-                  }}
+                <Link
+                  to="/forgot-password"
                   className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
                 >
                   Forgot Password?
-                </a>
+                </Link>
               </div>
 
               {/* Sign In Button */}

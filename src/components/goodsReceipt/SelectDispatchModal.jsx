@@ -108,30 +108,38 @@ const SelectDispatchModal = ({
         vendorName.includes(query) ||
         lrNumber.includes(query);
 
-      const deliveryDate =
-        dispatch.updatedAt ||
-        dispatch.expectedDeliveryDate;
+      // ─── Timezone-safe YYYY-MM-DD extraction ─────────────────
+      const toLocalDateStr = (raw) => {
+        if (!raw) return null;
+        const d = new Date(raw);
+        if (isNaN(d.getTime())) return null;
+        const yyyy = d.getFullYear();
+        const mm   = String(d.getMonth() + 1).padStart(2, "0");
+        const dd   = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      };
 
-      const formattedDate =
-        deliveryDate
-          ? new Date(deliveryDate)
-          : null;
+      // Filter against dispatchDate (primary) OR expectedDeliveryDate (secondary)
+      const dateStr1 = toLocalDateStr(dispatch.dispatchDate);
+      const dateStr2 = toLocalDateStr(dispatch.expectedDeliveryDate);
+
+      // A dispatch matches if AT LEAST ONE of its dates falls inside the range
+      const dateInRange = (dateStr) => {
+        if (!dateStr) return false;
+        const afterFrom = !fromDate || dateStr >= fromDate;
+        const beforeTo  = !toDate   || dateStr <= toDate;
+        return afterFrom && beforeTo;
+      };
 
       const matchesFromDate =
         !fromDate ||
-        (
-          formattedDate &&
-          formattedDate >=
-            new Date(`${fromDate}T00:00:00`)
-        );
+        dateInRange(dateStr1) ||
+        dateInRange(dateStr2);
 
       const matchesToDate =
         !toDate ||
-        (
-          formattedDate &&
-          formattedDate <=
-            new Date(`${toDate}T23:59:59`)
-        );
+        dateInRange(dateStr1) ||
+        dateInRange(dateStr2);
 
       return (
         matchesSearch &&
@@ -219,7 +227,7 @@ const SelectDispatchModal = ({
             FILTERS
         ================================================= */}
 
-        <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-4">
 
           {/* SEARCH */}
 
@@ -305,6 +313,23 @@ const SelectDispatchModal = ({
             </div>
 
           </div>
+
+          {/* CLEAR DATES */}
+
+          {(fromDate || toDate) && (
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setFromDate("");
+                  setToDate("");
+                }}
+                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
+              >
+                Clear Dates
+              </button>
+            </div>
+          )}
 
         </div>
 

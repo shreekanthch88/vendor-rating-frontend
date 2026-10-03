@@ -4,6 +4,7 @@ import {
   Pencil,
   Trash2,
   Printer,
+  FileText,
   MoreVertical,
   CheckCircle,
   XCircle,

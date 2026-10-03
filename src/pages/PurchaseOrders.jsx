@@ -800,6 +800,12 @@ const [fulfillmentLoading, setFulfillmentLoading] =
 
         <PurchaseOrderDashboardCards
           statistics={dashboard}
+          selectedStatus={status}
+          onSelectStatus={(newStatus) => {
+            setStatus(newStatus);
+            setPage(1);
+          }}
+          refreshTrigger={refreshTrigger}
         />
 
         {/* ==========================================
@@ -818,21 +824,16 @@ const [fulfillmentLoading, setFulfillmentLoading] =
         ========================================== */}
 
         <PurchaseOrderFilters
-
           search={search}
           setSearch={setSearch}
-
           status={status}
           setStatus={setStatus}
-
           vendor={vendor}
           setVendor={setVendor}
-
           priority={priority}
           setPriority={setPriority}
-
           onRefresh={refreshPage}
-
+          onReset={() => setPage(1)}
         />
 
         {/* ==========================================
@@ -840,31 +841,19 @@ const [fulfillmentLoading, setFulfillmentLoading] =
         ========================================== */}
 
         <PurchaseOrderTable
-
           purchaseOrders={purchaseOrders}
-
           loading={loading}
-
           onView={handleView}
-
           onEdit={handleEdit}
-
           onDelete={openDeleteDialog}
-
           onPrint={handlePrint}
-
           onExport={handleExport}
-
           onApprove={handleApproveSelected}
-
           onSubmit={handleSubmit}
-
           onSubmitSelected={handleSubmitSelected}
-
           onReject={handleReject}
-
           onSendToVendor={handleSendToVendor}
-
+          onCancel={handleCancel}
         />
 
         {/* ==========================================
