@@ -7,7 +7,9 @@ import { useVendorAuth } from "../context/VendorAuthContext";
 const VendorProtectedRoute = ({ children }) => {
   const {
     vendorUser,
+    vendorProfile,
     loading,
+    logout,
   } = useVendorAuth();
 
   const location = useLocation();
@@ -29,6 +31,21 @@ const VendorProtectedRoute = ({ children }) => {
     return (
       <Navigate
         to="/vendor/login"
+        replace
+      />
+    );
+  }
+
+  // Deactivated / Inactive Account
+  if (
+    vendorUser.status === "INACTIVE" ||
+    (vendorProfile && vendorProfile.status && vendorProfile.status !== "Active")
+  ) {
+    logout();
+    return (
+      <Navigate
+        to="/vendor/login"
+        state={{ error: "Your vendor account has been deactivated. Please contact the administrator." }}
         replace
       />
     );
