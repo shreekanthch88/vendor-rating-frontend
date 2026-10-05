@@ -72,6 +72,8 @@ import VendorRatings from "./pages/VendorRatings";
 import VendorRatingDetails from "./pages/VendorRatingDetails";
 import VendorRatingDashboard
   from "./pages/VendorRatingDashboard";
+import DeliveryPerformanceTransparency
+  from "./pages/DeliveryPerformanceTransparency";
 // ==================================================
 // QUALITY INSPECTION
 // ==================================================
@@ -355,6 +357,28 @@ function App() {
   element={
     <ProtectedRoute>
       <VendorRatingDetails />
+    </ProtectedRoute>
+  }
+/>
+
+{/* ==================================================
+    ADMIN VENDOR RATING DELIVERY CALCULATION
+    ================================================== */}
+
+<Route
+  path="/ratings/:id/delivery-calculation"
+  element={
+    <ProtectedRoute>
+      <DeliveryPerformanceTransparency />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/vendor-ratings/:id/delivery-calculation"
+  element={
+    <ProtectedRoute>
+      <DeliveryPerformanceTransparency />
     </ProtectedRoute>
   }
 />
